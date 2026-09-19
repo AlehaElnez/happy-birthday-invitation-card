@@ -178,8 +178,15 @@ public page. Contact details are returned only when the correct `HOST_KEY` is
 supplied, so they are never exposed in the browser.
 
 **No guest logins.** Anyone with the link can register, and nothing prevents the
-same person registering twice. There is deliberately no delete button on the
-page, so no guest can wipe your list.
+same person registering twice.
+
+**Removing a registration.** Only you can do this, from the dashboard. Go to
+`your-site.vercel.app/#admin`, enter your `HOST_KEY`, and each row in the table
+has a **Remove** button on the right. It asks you to confirm, then deletes that
+entry from the database — it disappears from the dashboard and, if they'd said
+yes, from the public guest list too, immediately. This can't be undone, so it's
+worth double-checking the name before confirming. Guests never see this button;
+it only appears once you're logged into the dashboard with the correct key.
 
 **Clearing test entries.** In Upstash, open your database → **Data Browser** →
 delete the `rsvps` key to empty the list completely.
