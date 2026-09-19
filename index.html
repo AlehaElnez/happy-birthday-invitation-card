@@ -270,6 +270,11 @@ p.body{font-size:clamp(17px,2.4vw,20px);line-height:1.56;max-width:56ch;margin:1
 .admin th{color:var(--text-faint);font-weight:400;letter-spacing:.1em;text-transform:uppercase}
 .pill{display:inline-block;padding:4px 9px;border-radius:99px;border:1px solid var(--line);white-space:nowrap}
 .pill.yes{background:rgba(176,138,70,.18)}
+.row-remove{border:1px solid var(--line);background:transparent;color:var(--error);padding:6px 10px;
+  border-radius:999px;font-family:'Jost',sans-serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  cursor:pointer;white-space:nowrap}
+.row-remove:hover{border-color:var(--error)}
+.row-remove:disabled{opacity:.5;cursor:not-allowed}
 .login{max-width:390px;margin:14vh auto;padding:28px;background:var(--card);border-radius:22px;
   border:1px solid var(--line);text-align:center}
 .login h2{font-style:italic;font-size:32px;margin:0 0 18px;font-weight:500}
@@ -438,10 +443,10 @@ p.body{font-size:clamp(17px,2.4vw,20px);line-height:1.56;max-width:56ch;margin:1
       <div class="hero-place" data-bind="venueLine"></div>
       <div class="hero-time" data-bind="timeText"></div>
     </div>
-    <a class="scroll-down" href="#note" aria-label="Scroll down"><span>Scroll</span><span class="arrow" aria-hidden="true"></span></a>
+    <a class="scroll-down" href="#invite-note" aria-label="Scroll down"><span>Scroll</span><span class="arrow" aria-hidden="true"></span></a>
   </section>
 
-  <section id="note" class="section note">
+  <section id="invite-note" class="section note">
     <div class="note-card">
       <p class="kicker" data-bind="noteKicker"></p>
       <h2 class="display" data-bind="noteHeading"></h2>
@@ -621,7 +626,15 @@ document.querySelectorAll('[data-bind]').forEach(el => {
 $('cardName').textContent = PARTY.name;
 $('cardOccasion').textContent = (PARTY.occasion || '').toUpperCase();
 $('cardDate').textContent = PARTY.dateText;
-$('monogram').textContent = PARTY.monogram || (PARTY.name || '').charAt(0);
+(function () {
+  const mono = PARTY.monogram || (PARTY.name || '').charAt(0);
+  const monoEl = $('monogram');
+  monoEl.textContent = mono;
+  // Shrink the flap lettering automatically for longer monograms so it
+  // always sits inside the flap, whether it's one initial or a full name.
+  const size = mono.length <= 2 ? 68 : mono.length <= 5 ? 52 : mono.length <= 8 ? 38 : 28;
+  monoEl.setAttribute('font-size', size);
+})();
 $('captionText').textContent = PARTY.coverSubtitle;
 $('captionTap').textContent = PARTY.openLabel;
 document.title = PARTY.name + ' · ' + PARTY.occasion;
@@ -803,14 +816,43 @@ function renderAdmin() {
   $('seatStat').textContent = yes.reduce((s, r) => s + (r.guests || 0), 0);
   if (!adminRows.length) { $('tableWrap').innerHTML = '<div class="empty">No responses yet.</div>'; return; }
   $('tableWrap').innerHTML =
-    '<table><thead><tr><th>Name</th><th>Contact</th><th>Seats</th><th>Reply</th><th>Note</th><th>Sent</th></tr></thead><tbody>' +
+    '<table><thead><tr><th>Name</th><th>Contact</th><th>Seats</th><th>Reply</th><th>Note</th><th>Sent</th><th></th></tr></thead><tbody>' +
     adminRows.map(r =>
-      '<tr><td><strong>' + esc(r.name) + '</strong></td><td>' + esc(r.contact) + '</td><td>' + (r.guests || 1) +
+      '<tr data-id="' + esc(r.id) + '"><td><strong>' + esc(r.name) + '</strong></td><td>' + esc(r.contact) + '</td><td>' + (r.guests || 1) +
       '</td><td><span class="pill ' + (r.attending === 'yes' ? 'yes' : '') + '">' +
       (r.attending === 'yes' ? 'Attending' : 'Can’t come') + '</span></td><td>' + esc(r.note) +
-      '</td><td>' + esc(new Date(r.at).toLocaleString()) + '</td></tr>'
+      '</td><td>' + esc(new Date(r.at).toLocaleString()) +
+      '</td><td><button class="row-remove" data-id="' + esc(r.id) + '" data-name="' + esc(r.name) + '" type="button">Remove</button></td></tr>'
     ).join('') + '</tbody></table>';
 }
+
+async function deleteRSVP(id) {
+  const key = sessionKey();
+  const res = await fetch('/api/rsvps?key=' + encodeURIComponent(key) + '&id=' + encodeURIComponent(id), {
+    method: 'DELETE'
+  });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'failed');
+}
+
+$('tableWrap').addEventListener('click', async e => {
+  const btn = e.target.closest('.row-remove');
+  if (!btn) return;
+  const id = btn.dataset.id;
+  const name = btn.dataset.name || 'this guest';
+  if (!confirm('Remove ' + name + '\u2019s registration? This can\u2019t be undone.')) return;
+  btn.disabled = true;
+  btn.textContent = 'Removing\u2026';
+  try {
+    await deleteRSVP(id);
+    adminRows = adminRows.filter(r => r.id !== id);
+    renderAdmin();
+    loadGuests();
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Remove';
+    alert('Could not remove that entry. Try refreshing and try again.');
+  }
+});
 
 function sessionKey() { try { return sessionStorage.getItem('host-key') || ''; } catch (e) { return ''; } }
 
