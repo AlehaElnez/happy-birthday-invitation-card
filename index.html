@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f0e8dc">
+<meta name="description" content="Birthday invitation and guest registration">
+<title>Birthday Invitation</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23f3ebdd'/%3E%3Ccircle cx='16' cy='17' r='7' fill='%23b08a46'/%3E%3Cpath d='M4 8h24l-12 10z' fill='%23fbf6ec' stroke='%23d8c9ae'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ==========================================================================
+   1 · COLOUR SETTINGS — CHANGE ANY COLOUR HERE
+   Every colour on the site is listed below with a note on what it controls.
+   Edit the hex value and it updates everywhere.
+   ========================================================================== */
+:root{
+
+  /* ---- PAGE BACKGROUNDS ---- */
+  --bg-main:        #f7f2e9;   /* Main sections: hero, countdown, guest list */
+  --bg-alt:         #efe8dc;   /* Alternating sections: note, venue, RSVP */
+  --bg-outer:       #e4dacb;   /* Page edges on desktop + footer background */
+
+  /* ---- TEXT ---- */
+  --text-main:      #4a3a2c;   /* Headings and body text */
+  --text-soft:      #8b7560;   /* Secondary text: address, sub-headings */
+  --text-faint:     #a3907a;   /* Small uppercase labels, countdown captions */
+
+  /* ---- GOLD ACCENT ---- */
+  --accent:         #b08a46;   /* Gold: buttons, thin rules, focus outlines */
+  --accent-light:   #d6bb80;   /* Lighter gold for the button gradient */
+  --accent-text:    #2e2115;   /* Text colour printed ON gold buttons */
+
+  /* ---- LINES, CARDS, FORM FIELDS ---- */
+  --line:           rgba(131,100,61,.24);  /* All hairline borders */
+  --card:           rgba(255,255,255,.42); /* Translucent boxes and cards */
+  --input-bg:       rgba(255,255,255,.62); /* Form input background */
+  --shadow:         0 22px 60px rgba(79,56,31,.12); /* Soft drop shadow */
+  --error:          #b4685a;   /* Error messages */
+
+  /* ---- ENVELOPE OPENING SCREEN ---- */
+  --env-screen:     #ece3d5;   /* Background behind the envelope */
+  --env-paper:      #f8f3e9;   /* Front of the envelope (lightest paper) */
+  --env-paper-dark: #ebe1d0;   /* Envelope body seen behind the flap */
+  --env-flap:       #fbf7ee;   /* The triangular flap */
+  --env-edge:       #ddceb4;   /* Folded paper edges */
+  --env-ink:        #8a7658;   /* Monogram and sprig printed on the paper */
+  --env-card:       #fffdf7;   /* The invitation card inside the envelope */
+  --env-caption:    #7d6550;   /* "Touch to open" caption */
+
+  /* ---- WAX SEAL ---- */
+  --wax-light:      #e0bd7c;   /* Lit edge of the wax */
+  --wax-mid:        #c39548;   /* Main wax colour */
+  --wax-dark:       #8a6227;   /* Shaded edge and recessed engraving */
+  --wax-glow:       rgba(255,225,155,.45); /* Halo that pulses around the seal */
+}
+/* ========================= END OF COLOUR SETTINGS ========================= */
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg-outer);color:var(--text-main);
+     font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif;overflow-x:hidden}
+body.locked{height:100svh;overflow:hidden}
+.page{max-width:820px;margin:0 auto;background:var(--bg-main);
+      box-shadow:0 0 70px rgba(45,31,17,.14);min-height:100vh}
+
+/* ==========================================================================
+   ENVELOPE OPENING SCREEN
+   ========================================================================== */
+.entrance{position:fixed;inset:0;z-index:900;background:var(--env-screen);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:clamp(16px,3vh,34px);padding:clamp(14px,4vh,40px);
+  transition:opacity .8s ease,visibility .8s ease}
+.entrance.hide{opacity:0;visibility:hidden;pointer-events:none}
+.entrance.finishing{opacity:0}
+
+.stage{perspective:1600px;display:flex;justify-content:center;width:100%}
+.env-scale{transform-origin:50% 62%;transform-style:preserve-3d;will-change:transform}
+
+/* The envelope is a button: tapping anywhere on it opens the invitation. */
+.envelope{position:relative;display:block;padding:0;border:0;background:none;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+  width:min(82vw,46svh,400px);aspect-ratio:400/560;
+  transform-style:preserve-3d;transition:transform .9s ease,opacity .7s ease}
+.envelope:focus-visible{outline:2px solid var(--accent);outline-offset:14px;border-radius:12px}
+.envelope .layer{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.envelope .flap{transform-origin:50% 25%;transform:rotateX(0deg);backface-visibility:visible}
+.envelope .card-holder{position:absolute;inset:0;transform:translateY(0)}
+
+/* wax seal */
+.seal{position:absolute;left:50%;top:68.6%;width:23%;aspect-ratio:1;
+  transform:translate(-50%,-50%);pointer-events:none}
+.seal:before{content:"";position:absolute;inset:-26%;border-radius:50%;
+  background:radial-gradient(circle,var(--wax-glow),rgba(190,143,57,.18) 46%,transparent 70%);
+  filter:blur(7px);animation:sealGlow 2.4s ease-in-out infinite}
+.seal svg{position:relative;width:100%;height:100%;display:block;
+  filter:drop-shadow(0 4px 7px rgba(84,58,26,.34))}
+@keyframes sealGlow{0%,100%{opacity:.4;transform:scale(.9)}50%{opacity:1;transform:scale(1.06)}}
+
+.caption{font-family:'Jost',sans-serif;font-weight:300;
+  font-size:clamp(10px,2.6vw,13px);letter-spacing:.34em;text-transform:uppercase;
+  color:var(--env-caption);text-align:center}
+.caption .tap{display:block;margin-top:9px;font-size:clamp(9px,2.2vw,11px);
+  letter-spacing:.22em;opacity:.62}
+
+/* opening sequence */
+.envelope.opening .seal{animation:sealBreak .42s ease forwards}
+.envelope.opening .flap{animation:flapOpen .85s .24s cubic-bezier(.34,.72,.28,1) forwards}
+.envelope.opening .card-holder{animation:cardRise .85s .92s cubic-bezier(.25,.9,.3,1) forwards}
+.entrance.opening .env-scale{animation:pullBack .85s .92s cubic-bezier(.25,.9,.3,1) forwards}
+@keyframes pullBack{to{transform:scale(.8) translateY(7%)}}
+.envelope.opening .env-mono,.envelope.opening .env-fold{animation:inkAway .3s .4s ease forwards}
+@keyframes inkAway{to{opacity:0}}
+@keyframes sealBreak{60%{transform:translate(-50%,-50%) scale(1.09)}
+  100%{transform:translate(-50%,-38%) scale(.7) rotate(-13deg);opacity:0}}
+@keyframes flapOpen{
+  0%{transform:translateZ(0) rotateX(0deg)}
+  49%{transform:translateZ(0) rotateX(-86deg)}
+  50%{transform:translateZ(-70px) rotateX(-88deg)}
+  100%{transform:translateZ(-70px) rotateX(-178deg)}}
+@keyframes cardRise{0%{transform:translateY(0)}100%{transform:translateY(-42%)}}
+.entrance.finishing .envelope{transform:scale(1.45) translateY(-4%);opacity:0}
+
+
+/* ---- envelope SVG painting (colours come from the settings above) ---- */
+#bodyGrad .s1{stop-color:var(--env-paper)}
+#bodyGrad .s2{stop-color:var(--env-paper-dark)}
+#flapGrad .s1{stop-color:var(--env-flap)}
+#flapGrad .s2{stop-color:var(--env-paper)}
+#cardGrad .s1{stop-color:var(--env-card)}
+#cardGrad .s2{stop-color:var(--env-paper)}
+#waxGrad .s1{stop-color:var(--wax-light)}
+#waxGrad .s2{stop-color:var(--wax-mid)}
+#waxGrad .s3{stop-color:var(--wax-dark)}
+.env-back{fill:var(--env-paper-dark);stroke:var(--env-edge);stroke-width:1}
+.env-front{fill:url(#bodyGrad);stroke:var(--env-edge);stroke-width:1}
+.env-flap-paper{fill:url(#flapGrad);stroke:var(--env-edge);stroke-width:1}
+.env-card-paper{fill:url(#cardGrad);stroke:var(--env-edge);stroke-width:1}
+.env-card-border{fill:none;stroke:var(--accent);stroke-width:.8;opacity:.45}
+.env-grain{fill:#fff;filter:url(#grain);opacity:.5}
+.env-fold{fill:none;stroke:#fff;stroke-width:1.2;opacity:.55}
+.env-ink{fill:var(--env-ink)}
+.env-ink-stroke{fill:none;stroke:var(--env-ink);stroke-width:1.1}
+.env-mono{fill:var(--env-ink);opacity:.85;font-family:'Cormorant Garamond',serif;font-style:italic}
+.card-name{fill:var(--text-main);font-family:'Cormorant Garamond',serif;font-style:italic}
+.card-occasion{fill:var(--text-faint);font-family:'Jost',sans-serif;letter-spacing:4px}
+.card-date{fill:var(--text-soft);font-family:'Cormorant Garamond',serif}
+.card-rule{stroke:var(--accent);stroke-width:.9;opacity:.6}
+.wax-body{fill:url(#waxGrad)}
+.wax-shade{fill:var(--wax-dark);opacity:.34}
+.wax-inner{fill:url(#waxGrad);opacity:.92}
+.wax-engrave{fill:var(--wax-dark);opacity:.42}
+.wax-engrave-stroke{fill:none;stroke:var(--wax-dark);stroke-width:1.3}
+.wax-shine{fill:none;stroke:var(--wax-light);stroke-width:2.4;stroke-linecap:round;opacity:.5}
+
+/* ==========================================================================
+   SHARED PAGE STYLES
+   ========================================================================== */
+.section{position:relative;padding:clamp(56px,9vw,86px) clamp(18px,5vw,36px);overflow:hidden}
+.kicker{font-family:'Jost',sans-serif;font-weight:300;letter-spacing:.26em;font-size:10px;
+  text-transform:uppercase;color:var(--text-faint);margin:0 0 16px}
+.rule{width:72px;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);margin:22px auto}
+h2.display{font-style:italic;font-weight:500;font-size:clamp(34px,7vw,56px);margin:0;line-height:1.05}
+p.body{font-size:clamp(17px,2.4vw,20px);line-height:1.56;max-width:56ch;margin:18px auto 0}
+
+.hero{min-height:100svh;display:flex;align-items:center;justify-content:center;text-align:center}
+.hero:before{content:"";position:absolute;inset:clamp(12px,3vw,24px);border:1px solid var(--line);
+  border-radius:180px 180px 18px 18px;pointer-events:none}
+.hero-content{position:relative;z-index:1;width:100%;padding:clamp(16px,4vw,30px)}
+.hero h1{margin:0;font-style:italic;font-weight:500;font-size:clamp(58px,15vw,126px);line-height:.9}
+.hero .turns{display:block;margin-top:14px;font-family:'Jost',sans-serif;font-weight:300;
+  font-size:clamp(11px,2.6vw,15px);letter-spacing:.42em;text-transform:uppercase;color:var(--accent)}
+.hero-date{font-weight:600;font-size:clamp(19px,2.8vw,23px);letter-spacing:.06em;margin-top:26px}
+.hero-place{font-size:clamp(16px,2.2vw,18px);line-height:1.45;max-width:50ch;margin:10px auto;color:var(--text-soft)}
+.hero-time{font-family:'Jost',sans-serif;font-weight:300;font-size:12px;letter-spacing:.24em;
+  color:var(--text-faint);margin-top:14px}
+.scroll-down{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:3;
+  display:flex;flex-direction:column;align-items:center;gap:7px;text-decoration:none;
+  color:var(--text-faint);font-family:'Jost',sans-serif;font-size:9px;letter-spacing:.26em;text-transform:uppercase}
+.scroll-down .arrow{width:16px;height:16px;border-right:1px solid var(--accent);
+  border-bottom:1px solid var(--accent);transform:rotate(45deg);animation:bob 1.8s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(-3px) rotate(45deg);opacity:.5}
+  50%{transform:translateY(4px) rotate(45deg);opacity:1}}
+
+.note{background:var(--bg-alt);text-align:center}
+.note-card{max-width:620px;margin:auto;padding:clamp(28px,6vw,46px) clamp(20px,5vw,34px);
+  border:1px solid var(--line);background:var(--card);box-shadow:var(--shadow)}
+
+.where{background:var(--bg-alt);text-align:center}
+.address{font-size:clamp(17px,2.4vw,20px);line-height:1.5;max-width:46ch;margin:18px auto}
+.actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+.btn{border:1px solid var(--line);background:transparent;color:var(--text-main);
+  padding:13px 20px;border-radius:999px;font-family:'Jost',sans-serif;font-size:11px;
+  letter-spacing:.14em;text-transform:uppercase;text-decoration:none;cursor:pointer;display:inline-block}
+.btn:hover{border-color:var(--accent)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.btn.gold{background:linear-gradient(135deg,var(--accent),var(--accent-light));
+  color:var(--accent-text);border-color:transparent}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+.countdown{text-align:center}
+.timer{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:560px;margin:26px auto 0}
+.timer div{border:1px solid var(--line);padding:15px 4px;background:var(--card)}
+.timer b{display:block;font-size:clamp(25px,5vw,33px);font-weight:500}
+.timer span{font-family:'Jost',sans-serif;font-size:8px;letter-spacing:.18em;
+  color:var(--text-faint);text-transform:uppercase}
+.timer.done{grid-template-columns:1fr}
+.timer.done b{font-style:italic;font-size:clamp(26px,5vw,32px)}
+
+.rsvp{background:var(--bg-alt);text-align:center}
+.rsvp-sub{font-size:17px;margin:10px 0 8px;color:var(--text-soft)}
+.seatline{font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);min-height:16px;margin-bottom:24px}
+.form{max-width:560px;margin:auto;text-align:left}
+.field{margin:0 0 16px}
+.field label{display:block;font-family:'Jost',sans-serif;font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--text-soft);margin:0 0 7px}
+.field input,.field select,.field textarea{width:100%;padding:15px;border:1px solid var(--line);
+  border-radius:14px;background:var(--input-bg);font:500 17px 'Cormorant Garamond',serif;
+  color:var(--text-main);outline:none}
+.field textarea{resize:vertical;min-height:74px}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(179,138,67,.16)}
+.attend{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.attend input{position:absolute;opacity:0;pointer-events:none}
+.attend label{margin:0;border:1px solid var(--line);padding:15px;border-radius:14px;text-align:center;
+  font-family:'Jost',sans-serif;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  cursor:pointer;color:var(--text-main)}
+.attend input:checked+label{background:linear-gradient(135deg,var(--accent),var(--accent-light));
+  color:var(--accent-text);border-color:transparent}
+.attend input:focus-visible+label{outline:2px solid var(--accent);outline-offset:3px}
+.submit{width:100%;margin-top:6px}
+.status{min-height:22px;text-align:center;font-family:'Jost',sans-serif;font-size:11px;
+  letter-spacing:.09em;margin-top:12px;color:var(--text-soft)}
+.status.bad{color:var(--error)}
+
+.guestbook{text-align:center}
+.guestlist{max-width:560px;margin:24px auto 0;display:flex;flex-direction:column;gap:9px}
+.guestrow{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+  padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:var(--card);text-align:left}
+.guestrow b{font-weight:600;font-size:18px}
+.guestrow em{font-style:italic;color:var(--text-soft);font-size:15px;display:block;margin-top:2px}
+.guestrow span{font-family:'Jost',sans-serif;font-size:9px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--text-faint);white-space:nowrap}
+.empty{padding:22px;color:var(--text-faint);font-family:'Jost',sans-serif;font-size:12px;line-height:1.7}
+
+.footer{text-align:center;background:var(--bg-outer);padding:clamp(40px,7vw,62px) 24px}
+.footer .sign{font-style:italic;font-size:clamp(40px,7vw,56px)}
+.footer p{font-size:16px;margin:8px 0;color:var(--text-soft)}
+.admin-link{margin-top:22px;display:inline-block;font-family:'Jost',sans-serif;font-size:9px;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--text-faint);text-decoration:none;opacity:.7}
+
+/* ---------- host dashboard ---------- */
+.admin{display:none;min-height:100vh;background:var(--bg-alt)}
+.admin.active{display:block}
+.admin-inner{max-width:900px;margin:auto;padding:30px 18px 70px}
+.admin-top{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+.admin h1{font-style:italic;font-weight:500;margin:0;font-size:clamp(30px,6vw,40px)}
+.admin-card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.stat{padding:16px;border:1px solid var(--line);border-radius:14px;text-align:center;background:var(--card)}
+.stat b{display:block;font-size:27px;font-weight:500}
+.stat span{font:9px 'Jost',sans-serif;letter-spacing:.14em;color:var(--text-faint);text-transform:uppercase}
+.tablewrap{overflow-x:auto}
+.admin table{width:100%;border-collapse:collapse;font-family:'Jost',sans-serif;font-size:11px;min-width:600px}
+.admin th,.admin td{padding:11px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.admin th{color:var(--text-faint);font-weight:400;letter-spacing:.1em;text-transform:uppercase}
+.pill{display:inline-block;padding:4px 9px;border-radius:99px;border:1px solid var(--line);white-space:nowrap}
+.pill.yes{background:rgba(176,138,70,.18)}
+.login{max-width:390px;margin:14vh auto;padding:28px;background:var(--card);border-radius:22px;
+  border:1px solid var(--line);text-align:center}
+.login h2{font-style:italic;font-size:32px;margin:0 0 18px;font-weight:500}
+.login input{width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;
+  background:var(--input-bg);font:16px 'Jost',sans-serif;color:var(--text-main)}
+.login .btn{width:100%;margin-top:10px}
+.error{color:var(--error);font:11px 'Jost',sans-serif;margin-top:10px;min-height:14px}
+.hide{display:none!important}
+
+/* ---------- responsive tuning ---------- */
+@media(max-width:520px){
+  .hero:before{border-radius:140px 140px 14px 14px}
+  .stats{grid-template-columns:1fr 1fr}
+  .timer{gap:6px}
+  .envelope{width:min(86vw,44svh,340px)}
+}
+@media(min-width:900px){
+  .page{box-shadow:0 0 90px rgba(45,31,17,.16)}
+  .envelope{width:min(46svh,400px)}
+}
+@media(orientation:landscape) and (max-height:560px){
+  .envelope{width:min(46vw,40svh,240px)}
+  .caption{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  .entrance{transition:none}
+  *,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;
+    animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body class="locked">
+
+<!-- ==========================================================================
+     ENVELOPE COVER — drawn entirely in SVG, no image files needed
+     ========================================================================== -->
+<div id="entrance" class="entrance">
+  <div class="stage">
+    <div class="env-scale">
+    <button class="envelope" id="envelope" aria-label="Tap to open the invitation">
+
+      <!-- shared paper texture, gradients and the leaf used all over -->
+      <svg class="layer" viewBox="0 0 400 560" aria-hidden="true">
+        <defs>
+          <filter id="grain" x="-10%" y="-10%" width="120%" height="120%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="n"/>
+            <feColorMatrix in="n" type="saturate" values="0"/>
+            <feComponentTransfer><feFuncA type="linear" slope="0.05"/></feComponentTransfer>
+          </filter>
+          <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop class="s1" offset="0"/><stop class="s2" offset="1"/>
+          </linearGradient>
+          <linearGradient id="flapGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop class="s1" offset="0"/><stop class="s2" offset="1"/>
+          </linearGradient>
+          <linearGradient id="cardGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop class="s1" offset="0"/><stop class="s2" offset="1"/>
+          </linearGradient>
+          <radialGradient id="waxGrad" cx="34%" cy="28%" r="80%">
+            <stop class="s1" offset="0"/><stop class="s2" offset="52%"/><stop class="s3" offset="100%"/>
+          </radialGradient>
+          <path id="leaf" d="M0 0C7 -6 17 -7 25 -2C17 5 7 6 0 0Z"/>
+          <filter id="envShadow" x="-25%" y="-25%" width="150%" height="150%">
+            <feDropShadow dx="0" dy="16" stdDeviation="13" flood-color="#5f4326" flood-opacity=".2"/>
+          </filter>
+          <filter id="cardShadow" x="-25%" y="-25%" width="150%" height="150%">
+            <feDropShadow dx="0" dy="7" stdDeviation="7" flood-color="#5f4326" flood-opacity=".16"/>
+          </filter>
+        </defs>
+
+        <!-- envelope body seen behind the flap -->
+        <rect class="env-back" x="40" y="140" width="320" height="405" rx="9" filter="url(#envShadow)"/>
+      </svg>
+
+      <!-- the invitation card, tucked inside until the flap opens -->
+      <div class="card-holder">
+        <svg class="layer" viewBox="0 0 400 560" aria-hidden="true">
+          <rect class="env-card-paper" x="62" y="166" width="276" height="352" rx="5" filter="url(#cardShadow)"/>
+          <rect class="env-card-border" x="74" y="178" width="252" height="328" rx="3"/>
+          <text class="card-name" id="cardName" x="200" y="254" text-anchor="middle" font-size="42"></text>
+          <line class="card-rule" x1="154" y1="276" x2="246" y2="276"/>
+          <text class="card-occasion" id="cardOccasion" x="200" y="302" text-anchor="middle" font-size="10.5"></text>
+          <text class="card-date" id="cardDate" x="200" y="344" text-anchor="middle" font-size="17"></text>
+          <g class="env-ink" opacity=".45" transform="translate(200,400)">
+            <path class="env-ink-stroke" d="M0 14C0 4 0 -6 0 -16"/>
+            <use href="#leaf" transform="translate(0,8) rotate(-28) scale(.6)"/>
+            <use href="#leaf" transform="translate(0,8) rotate(208) scale(.6)"/>
+            <use href="#leaf" transform="translate(0,-2) rotate(-20) scale(.64)"/>
+            <use href="#leaf" transform="translate(0,-2) rotate(200) scale(.64)"/>
+            <use href="#leaf" transform="translate(0,-12) rotate(-10) scale(.54)"/>
+            <use href="#leaf" transform="translate(0,-12) rotate(190) scale(.54)"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- front face of the envelope: the pocket the card sits in -->
+      <svg class="layer" viewBox="0 0 400 560" aria-hidden="true">
+        <rect class="env-front" x="40" y="140" width="320" height="405" rx="9"/>
+        <rect class="env-grain" x="40" y="140" width="320" height="405" rx="9"/>
+        <!-- little sprig printed near the bottom -->
+        <g class="env-ink" opacity=".6" transform="translate(200,498)">
+          <path class="env-ink-stroke" d="M-30 2C-14 -6 12 -8 30 -3"/>
+          <use href="#leaf" transform="translate(-19,-4) rotate(-36) scale(.8)"/>
+          <use href="#leaf" transform="translate(-4,-8) rotate(-22) scale(.85)"/>
+          <use href="#leaf" transform="translate(11,-8) rotate(-10) scale(.78)"/>
+          <use href="#leaf" transform="translate(-15,3) rotate(32) scale(.7)"/>
+          <use href="#leaf" transform="translate(1,1) rotate(20) scale(.74)"/>
+          <use href="#leaf" transform="translate(16,-1) rotate(6) scale(.66)"/>
+        </g>
+      </svg>
+
+      <!-- the flap, hinged along the top edge of the envelope -->
+      <svg class="layer flap" viewBox="0 0 400 560" aria-hidden="true">
+        <path class="env-flap-paper" d="M40 150 Q40 140 50 140 L350 140 Q360 140 360 150 L206 384 Q200 392 194 384 Z"/>
+        <path class="env-grain" d="M40 150 Q40 140 50 140 L350 140 Q360 140 360 150 L206 384 Q200 392 194 384 Z"/>
+        <path class="env-fold" d="M47 153 L200 376 L353 153"/>
+        <text class="env-mono" id="monogram" x="200" y="243" text-anchor="middle" font-size="68"></text>
+      </svg>
+
+      <!-- wax seal, sitting on the tip of the flap -->
+      <span class="seal" aria-hidden="true">
+        <svg viewBox="0 0 120 120">
+          <path class="wax-body" d="M60 4C75 2 90 8 100 19C110 30 116 45 114 60C112 75 103 89 90 98
+            C77 107 59 111 45 107C30 103 17 93 11 80C4 66 4 49 11 36C18 21 34 6 60 4Z"/>
+          <path class="wax-shade" d="M60 13C74 11 87 17 96 27C105 37 110 50 108 63C106 76 98 88 86 96
+            C74 103 58 106 45 102C32 98 21 89 16 77C10 64 10 50 16 38C23 25 38 15 60 13Z"/>
+          <path class="wax-inner" d="M60 17C73 15 85 21 93 30C101 39 106 51 104 62C102 74 95 85 84 92
+            C73 98 58 101 46 97C34 93 24 85 20 74C15 62 15 49 21 38C27 27 41 19 60 17Z"/>
+          <g class="wax-engrave">
+            <path class="wax-engrave-stroke" d="M60 88C57 73 57 55 60 36"/>
+            <use href="#leaf" transform="translate(60,80) rotate(-30) scale(.78)"/>
+            <use href="#leaf" transform="translate(60,80) rotate(210) scale(.78)"/>
+            <use href="#leaf" transform="translate(59,68) rotate(-22) scale(.84)"/>
+            <use href="#leaf" transform="translate(59,68) rotate(202) scale(.84)"/>
+            <use href="#leaf" transform="translate(59,56) rotate(-16) scale(.8)"/>
+            <use href="#leaf" transform="translate(59,56) rotate(196) scale(.8)"/>
+            <use href="#leaf" transform="translate(60,45) rotate(-8) scale(.64)"/>
+            <use href="#leaf" transform="translate(60,45) rotate(188) scale(.64)"/>
+            <use href="#leaf" transform="translate(60,36) rotate(-90) scale(.42)"/>
+          </g>
+          <path class="wax-shine" d="M26 32C34 22 46 16 58 14"/>
+        </svg>
+      </span>
+    </button>
+    </div>
+  </div>
+
+  <div class="caption">
+    <span id="captionText"></span>
+    <span class="tap" id="captionTap"></span>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     THE INVITATION
+     ========================================================================== -->
+<div id="site" class="page">
+
+  <section id="top" class="section hero">
+    <div class="hero-content">
+      <p class="kicker" data-bind="heroKicker"></p>
+      <div class="rule"></div>
+      <h1><span data-bind="name"></span><span class="turns" data-bind="occasion"></span></h1>
+      <div class="rule"></div>
+      <div class="hero-date" data-bind="dateText"></div>
+      <div class="hero-place" data-bind="venueLine"></div>
+      <div class="hero-time" data-bind="timeText"></div>
+    </div>
+    <a class="scroll-down" href="#note" aria-label="Scroll down"><span>Scroll</span><span class="arrow" aria-hidden="true"></span></a>
+  </section>
+
+  <section id="note" class="section note">
+    <div class="note-card">
+      <p class="kicker" data-bind="noteKicker"></p>
+      <h2 class="display" data-bind="noteHeading"></h2>
+      <p class="body" data-bind="noteBody"></p>
+    </div>
+  </section>
+
+  <section class="section where">
+    <p class="kicker">Where to find us</p>
+    <h2 class="display" data-bind="venueName"></h2>
+    <div class="address" data-bind="venueAddress"></div>
+    <div class="hero-time" data-bind="whenLine"></div>
+    <div class="actions">
+      <a class="btn gold" id="mapsBtn" target="_blank" rel="noopener">Open in Google Maps</a>
+      <button class="btn" id="calendarBtn" type="button">Add to calendar</button>
+    </div>
+  </section>
+
+  <section class="section countdown">
+    <p class="kicker">Counting down</p>
+    <h2 class="display">Until the party</h2>
+    <div class="timer" id="timer">
+      <div><b id="days">00</b><span>Days</span></div>
+      <div><b id="hours">00</b><span>Hours</span></div>
+      <div><b id="mins">00</b><span>Minutes</span></div>
+      <div><b id="secs">00</b><span>Seconds</span></div>
+    </div>
+  </section>
+
+  <section id="rsvp" class="section rsvp">
+    <p class="kicker">Register your seat</p>
+    <h2 class="display">RSVP</h2>
+    <p class="rsvp-sub" data-bind="rsvpDeadline"></p>
+    <div class="seatline" id="seatline"></div>
+    <form id="rsvpForm" class="form" novalidate>
+      <div class="field">
+        <label for="name">Your name</label>
+        <input id="name" name="name" required placeholder="Full name" autocomplete="name" maxlength="60">
+      </div>
+      <div class="field">
+        <label for="contact">Phone or email</label>
+        <input id="contact" name="contact" placeholder="So we can reach you" autocomplete="tel" maxlength="80">
+      </div>
+      <div class="field">
+        <label for="guests">How many of you</label>
+        <select id="guests" name="guests" required>
+          <option value="">Select</option>
+          <option value="1">Just me</option>
+          <option value="2">2 guests</option>
+          <option value="3">3 guests</option>
+          <option value="4">4 guests</option>
+          <option value="5">5 guests</option>
+          <option value="6">6 guests</option>
+        </select>
+      </div>
+      <div class="field">
+        <label id="attendLabel">Will you be there</label>
+        <div class="attend" role="radiogroup" aria-labelledby="attendLabel">
+          <input id="yes" type="radio" name="attending" value="yes" checked>
+          <label for="yes">Yes, count me in</label>
+          <input id="no" type="radio" name="attending" value="no">
+          <label for="no">Sadly can't make it</label>
+        </div>
+      </div>
+      <div class="field">
+        <label for="note">A note for the host (optional)</label>
+        <textarea id="note" name="note" placeholder="Song request, dietary note, or just a hello" maxlength="200"></textarea>
+      </div>
+      <button class="btn gold submit" type="submit" id="submitBtn">Send my RSVP</button>
+      <div id="rsvpStatus" class="status" aria-live="polite"></div>
+    </form>
+  </section>
+
+  <section class="section guestbook">
+    <p class="kicker">Already coming</p>
+    <h2 class="display">The guest list</h2>
+    <div class="guestlist" id="guestlist"><div class="empty">Loading the guest list…</div></div>
+  </section>
+
+  <footer class="footer">
+    <div class="sign" data-bind="footerSign"></div>
+    <p data-bind="footerLine"></p>
+    <a class="admin-link" href="#admin">Host dashboard</a>
+  </footer>
+</div>
+
+<!-- ==========================================================================
+     HOST DASHBOARD  (your-site.com/#admin)
+     ========================================================================== -->
+<div id="admin" class="admin">
+  <div class="admin-inner">
+    <div id="adminLogin" class="login">
+      <p class="kicker">Host only</p>
+      <h2>Guest dashboard</h2>
+      <input id="adminKey" type="password" placeholder="Host key" autocomplete="current-password">
+      <button class="btn gold" id="loginBtn" type="button">Open dashboard</button>
+      <div id="loginError" class="error"></div>
+      <a class="admin-link" href="#top">Back to the invitation</a>
+    </div>
+    <div id="dashboard" class="hide">
+      <div class="admin-top">
+        <div><p class="kicker" data-bind="name"></p><h1>Guest dashboard</h1></div>
+        <div class="actions" style="margin:0">
+          <button class="btn" id="refreshBtn" type="button">Refresh</button>
+          <button class="btn" id="exportBtn" type="button">Download CSV</button>
+          <a class="btn" href="#top">Invitation</a>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="totalStat">0</b><span>Responses</span></div>
+        <div class="stat"><b id="yesStat">0</b><span>Attending</span></div>
+        <div class="stat"><b id="noStat">0</b><span>Can't come</span></div>
+        <div class="stat"><b id="seatStat">0</b><span>Seats booked</span></div>
+      </div>
+      <div class="admin-card"><div class="tablewrap" id="tableWrap"></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ==========================================================================
+   2 · PARTY SETTINGS — CHANGE THE NAME, DATE, TIME AND PLACE HERE
+   ========================================================================== */
+const PARTY = {
+
+  /* --- who and what --- */
+  name:          "Aarya",                 // Big name on the card and the hero
+  occasion:      "Turns Thirty",          // Small line under the name
+  monogram:      "A",                     // Letter printed on the envelope flap
+
+  /* --- when ---
+     startsAt / endsAt drive the countdown and the "Add to calendar" file.
+     Format: YYYY-MM-DDTHH:MM:SS + your timezone offset.
+     +05:30 Sri Lanka & India · +04:00 Dubai · +01:00 Berlin · +00:00 London
+     -05:00 New York · -08:00 Los Angeles · +08:00 Singapore · +10:00 Sydney  */
+  startsAt:      "2026-10-24T19:00:00+05:30",
+  endsAt:        "2026-10-24T23:30:00+05:30",
+
+  dateText:      "Saturday, 24 October 2026",          // Written date on the hero
+  timeText:      "7:00 PM until late",                 // Written time on the hero
+  whenLine:      "Saturday 24 October 2026 · 7:00 PM", // Line in the venue section
+  countdownOver: "The day is here",                    // Shown when the countdown hits zero
+
+  /* --- where --- */
+  venueName:     "Villa Luna",
+  venueAddress:  "East Coast Road, near the Intercontinental,\nNemmeli 603104",
+  venueLine:     "Villa Luna, East Coast Road, Nemmeli 603104",
+  mapsQuery:     "Villa Luna, East Coast Rd, Nemmeli 603104", // What Google Maps searches for
+
+  /* --- wording --- */
+  coverSubtitle: "Birthday Invitation",        // Caption under the envelope
+  openLabel:     "Tap the envelope to open",   // Smaller caption below that
+  heroKicker:    "You are invited to celebrate",
+  noteKicker:    "A few little notes",
+  noteHeading:   "One long evening,\nwith everyone I love.",
+  noteBody:      "Dinner, music and far too much cake. Come as you are, stay as long as you like, and register below so we can save you a seat.",
+  rsvpDeadline:  "Please let us know by 10 October.",
+  footerSign:    "See you there",
+  footerLine:    "With love, and a table already set for you.",
+
+  /* --- behaviour --- */
+  showEnvelopeOnce: true   // true = skip the envelope if they already opened it this visit
+};
+/* ========================= END OF PARTY SETTINGS ========================== */
+
+
+const PREVIEW = location.protocol === 'file:';   // opened by double-click, no server
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>'"]/g,
+  c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[c]));
+
+/* ---------- write the settings into the page ---------- */
+document.querySelectorAll('[data-bind]').forEach(el => {
+  const v = PARTY[el.dataset.bind];
+  if (typeof v === 'string') el.innerHTML = esc(v).replace(/\n/g, '<br>');
+});
+$('cardName').textContent = PARTY.name;
+$('cardOccasion').textContent = (PARTY.occasion || '').toUpperCase();
+$('cardDate').textContent = PARTY.dateText;
+$('monogram').textContent = PARTY.monogram || (PARTY.name || '').charAt(0);
+$('captionText').textContent = PARTY.coverSubtitle;
+$('captionTap').textContent = PARTY.openLabel;
+document.title = PARTY.name + ' · ' + PARTY.occasion;
+$('mapsBtn').href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(PARTY.mapsQuery);
+
+/* ---------- opening the envelope ---------- */
+const entrance = $('entrance');
+const envelope = $('envelope');
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let isOpening = false;
+
+function revealPage(instant) {
+  document.body.classList.remove('locked');
+  window.scrollTo(0, 0);
+  if (instant) { entrance.classList.add('hide'); return; }
+  setTimeout(() => entrance.classList.add('finishing'), 1700);
+  setTimeout(() => entrance.classList.add('hide'), 2600);
+}
+
+function openEnvelope() {
+  if (isOpening) return;
+  isOpening = true;
+  try { if (PARTY.showEnvelopeOnce) sessionStorage.setItem('inv-opened', '1'); } catch (e) {}
+  if (reduceMotion) { revealPage(true); return; }
+  envelope.classList.add('opening');
+  entrance.classList.add('opening');
+  revealPage(false);
+}
+
+envelope.addEventListener('click', openEnvelope);
+
+let alreadySeen = false;
+try { alreadySeen = PARTY.showEnvelopeOnce && sessionStorage.getItem('inv-opened') === '1'; } catch (e) {}
+if (alreadySeen) { entrance.classList.add('hide'); document.body.classList.remove('locked'); }
+
+/* ---------- live countdown ---------- */
+const startTime = new Date(PARTY.startsAt).getTime();
+let timerId = null;
+function tick() {
+  const n = startTime - Date.now();
+  if (!isFinite(n)) return;
+  if (n <= 0) {
+    $('timer').classList.add('done');
+    $('timer').innerHTML = '<div><b>' + esc(PARTY.countdownOver) + '</b></div>';
+    if (timerId) clearInterval(timerId);
+    return;
+  }
+  $('days').textContent  = String(Math.floor(n / 86400000)).padStart(2, '0');
+  $('hours').textContent = String(Math.floor(n / 3600000) % 24).padStart(2, '0');
+  $('mins').textContent  = String(Math.floor(n / 60000) % 60).padStart(2, '0');
+  $('secs').textContent  = String(Math.floor(n / 1000) % 60).padStart(2, '0');
+}
+tick();
+timerId = setInterval(tick, 1000);
+
+/* ---------- add to calendar ---------- */
+function icsStamp(value) {
+  const d = new Date(value);
+  return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+}
+function download(filename, text, mime) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: mime }));
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 800);
+}
+$('calendarBtn').addEventListener('click', () => {
+  const ics = [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Birthday Invitation//EN', 'BEGIN:VEVENT',
+    'UID:' + Date.now() + '@invitation',
+    'DTSTAMP:' + icsStamp(new Date()),
+    'DTSTART:' + icsStamp(PARTY.startsAt),
+    'DTEND:' + icsStamp(PARTY.endsAt),
+    'SUMMARY:' + PARTY.name + ' — ' + PARTY.occasion,
+    'LOCATION:' + PARTY.venueName + ', ' + PARTY.venueAddress.replace(/\n/g, ' '),
+    'END:VEVENT', 'END:VCALENDAR'
+  ].join('\r\n');
+  download(PARTY.name.toLowerCase().replace(/\s+/g, '-') + '-party.ics', ics, 'text/calendar');
+});
+
+/* ---------- guest list ---------- */
+let publicGuests = [];
+
+async function loadGuests() {
+  try {
+    const res = await fetch('/api/rsvps', { cache: 'no-store' });
+    if (!res.ok) throw new Error('bad status');
+    const data = await res.json();
+    publicGuests = data.guests || [];
+    renderGuests(data.seats || 0);
+  } catch (e) {
+    $('guestlist').innerHTML = PREVIEW
+      ? '<div class="empty">Design preview. Names appear here once the site is on Vercel with its database connected.</div>'
+      : '<div class="empty">The guest list isn’t loading. Check that the database is connected in Vercel — step 3 in the README.</div>';
+  }
+}
+
+function renderGuests(seats) {
+  $('seatline').textContent = seats ? seats + (seats === 1 ? ' seat booked so far' : ' seats booked so far') : '';
+  const el = $('guestlist');
+  if (!publicGuests.length) {
+    el.innerHTML = '<div class="empty">No one has registered yet. Be the first.</div>';
+    return;
+  }
+  el.innerHTML = publicGuests.map(g =>
+    '<div class="guestrow"><div><b>' + esc(g.name) + '</b>' +
+    (g.note ? '<em>' + esc(g.note) + '</em>' : '') +
+    '</div><span>' + (g.guests === 1 ? '1 seat' : g.guests + ' seats') + '</span></div>'
+  ).join('');
+}
+loadGuests();
+
+/* ---------- send an RSVP ---------- */
+$('rsvpForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const form = e.currentTarget;
+  const status = $('rsvpStatus');
+  status.classList.remove('bad');
+
+  const name = form.name.value.trim();
+  const guests = form.guests.value;
+  if (!name) { status.textContent = 'Please add your name so we know who to expect.'; status.classList.add('bad'); form.name.focus(); return; }
+  if (!guests) { status.textContent = 'Please choose how many of you are coming.'; status.classList.add('bad'); form.guests.focus(); return; }
+
+  const entry = {
+    name: name,
+    contact: form.contact.value.trim(),
+    guests: parseInt(guests, 10),
+    attending: form.attending.value,
+    note: form.note.value.trim()
+  };
+
+  $('submitBtn').disabled = true;
+  status.textContent = 'Sending…';
+  try {
+    const res = await fetch('/api/rsvps', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry)
+    });
+    if (!res.ok) throw new Error('failed');
+    form.reset();
+    $('yes').checked = true;
+    status.textContent = entry.attending === 'yes'
+      ? 'You’re on the list. See you on the day.'
+      : 'Thank you for letting us know — you’ll be missed.';
+    await loadGuests();
+    if (entry.attending === 'yes') document.querySelector('.guestbook').scrollIntoView({ behavior: 'smooth' });
+  } catch (err) {
+    status.textContent = PREVIEW
+      ? 'Design preview — RSVPs save once the site is deployed on Vercel.'
+      : 'That didn’t save. Check your connection and send it again.';
+    status.classList.add('bad');
+  } finally {
+    $('submitBtn').disabled = false;
+  }
+});
+
+/* ---------- host dashboard ---------- */
+let adminRows = [];
+
+async function loadAdmin(key) {
+  const res = await fetch('/api/rsvps?key=' + encodeURIComponent(key), { cache: 'no-store' });
+  if (res.status === 401) throw new Error('unauthorised');
+  if (!res.ok) throw new Error('failed');
+  const data = await res.json();
+  adminRows = data.rsvps || [];
+  renderAdmin();
+}
+
+function renderAdmin() {
+  const yes = adminRows.filter(r => r.attending === 'yes');
+  $('totalStat').textContent = adminRows.length;
+  $('yesStat').textContent = yes.length;
+  $('noStat').textContent = adminRows.length - yes.length;
+  $('seatStat').textContent = yes.reduce((s, r) => s + (r.guests || 0), 0);
+  if (!adminRows.length) { $('tableWrap').innerHTML = '<div class="empty">No responses yet.</div>'; return; }
+  $('tableWrap').innerHTML =
+    '<table><thead><tr><th>Name</th><th>Contact</th><th>Seats</th><th>Reply</th><th>Note</th><th>Sent</th></tr></thead><tbody>' +
+    adminRows.map(r =>
+      '<tr><td><strong>' + esc(r.name) + '</strong></td><td>' + esc(r.contact) + '</td><td>' + (r.guests || 1) +
+      '</td><td><span class="pill ' + (r.attending === 'yes' ? 'yes' : '') + '">' +
+      (r.attending === 'yes' ? 'Attending' : 'Can’t come') + '</span></td><td>' + esc(r.note) +
+      '</td><td>' + esc(new Date(r.at).toLocaleString()) + '</td></tr>'
+    ).join('') + '</tbody></table>';
+}
+
+function sessionKey() { try { return sessionStorage.getItem('host-key') || ''; } catch (e) { return ''; } }
+
+$('loginBtn').addEventListener('click', async () => {
+  const key = $('adminKey').value.trim();
+  $('loginError').textContent = '';
+  if (!key) { $('loginError').textContent = 'Enter your host key.'; return; }
+  try {
+    await loadAdmin(key);
+    try { sessionStorage.setItem('host-key', key); } catch (e) {}
+    $('adminLogin').classList.add('hide');
+    $('dashboard').classList.remove('hide');
+  } catch (e) {
+    $('loginError').textContent = e.message === 'unauthorised'
+      ? 'That key doesn’t match the one set in Vercel.'
+      : 'Could not reach the guest list. Is the site deployed with its database connected?';
+  }
+});
+$('adminKey').addEventListener('keydown', e => { if (e.key === 'Enter') $('loginBtn').click(); });
+$('refreshBtn').addEventListener('click', () => loadAdmin(sessionKey()).catch(() => {}));
+
+$('exportBtn').addEventListener('click', () => {
+  if (!adminRows.length) return;
+  const rows = [['Name', 'Contact', 'Seats', 'Reply', 'Note', 'Sent']].concat(
+    adminRows.map(r => [r.name, r.contact, r.guests,
+      r.attending === 'yes' ? 'Attending' : "Can't come", r.note, new Date(r.at).toLocaleString()])
+  );
+  const csv = rows.map(r => r.map(v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"').join(',')).join('\n');
+  download('guest-list.csv', csv, 'text/csv');
+});
+
+/* ---------- switching between invitation and dashboard ---------- */
+function route() {
+  const isAdmin = location.hash.toLowerCase() === '#admin';
+  $('site').style.display = isAdmin ? 'none' : '';
+  $('admin').classList.toggle('active', isAdmin);
+  if (isAdmin) {
+    document.body.classList.remove('locked');
+    entrance.classList.add('hide');
+    const key = sessionKey();
+    if (key) {
+      loadAdmin(key)
+        .then(() => { $('adminLogin').classList.add('hide'); $('dashboard').classList.remove('hide'); })
+        .catch(() => { $('adminLogin').classList.remove('hide'); $('dashboard').classList.add('hide'); });
+    } else {
+      $('adminLogin').classList.remove('hide');
+      $('dashboard').classList.add('hide');
+    }
+  }
+}
+window.addEventListener('hashchange', route);
+route();
+</script>
+</body>
+</html>
